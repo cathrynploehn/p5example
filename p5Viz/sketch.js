@@ -10,6 +10,10 @@ let visualVariable = 0;
 //gestures
 let gestureVals = [];
 let gestureCounter = 0;
+let gestureName = "";
+let gestureMode = "start";
+
+let colorScale = chroma.scale(['#fafa6e','#2A4858']);
 
 //canvas settings
 const settings = {
@@ -22,8 +26,8 @@ let gestureRecognizer;
 let runningMode = "IMAGE";
 let enableWebcamButton;
 let webcamRunning = false;
-const videoHeight = "360px";
-const videoWidth = "480px";
+const videoHeight = "180px";
+const videoWidth = "240px";
 
 async function runDemo() {
   const vision = await FilesetResolver.forVisionTasks(
@@ -107,7 +111,7 @@ async function predictWebcam() {
   webcamElement.style.width = videoWidth
 
   canvasCtx.restore()
-  let gestureName = "";
+  gestureName = "";
   if (results.gestures.length > 0) {
     gestureOutput.style.display = "block";
     gestureOutput.style.width = videoWidth;
@@ -124,13 +128,15 @@ async function predictWebcam() {
   }
   //if gesture is open palm or closed fist...
   if(gestureName === "Open_Palm"){
-    console.log("open palm");
     gestureVals.push(1);
     // TODO: change snowflakes / visual here
   } else if (gestureName === "Closed_Fist"){
-    console.log("fist");
     gestureVals.push(-1);
      // TODO: change snowflakes / visual here
+  } else if (gestureName === "Thumb_Down"){
+    gestureMode = "stop";
+  } else if (gestureName === "Thumb_Up"){
+    gestureMode = "start";
   };
   // Call this function again to keep predicting when the browser is ready.
   if (webcamRunning === true) {
@@ -154,10 +160,10 @@ const updateParams = () => {
     }
     visualVariable = gestureCounter;
   }
-   console.log("visual variable value: ", visualVariable);
 };
 
 let snowflakes = []; // array to hold snowflake objects
+
 
 // snowflake class
 function snowflake(sketch) {
@@ -172,14 +178,16 @@ function snowflake(sketch) {
     this.radius = sketch.sqrt(sketch.random(sketch.pow(sketch.width / 2, 2)));
   
     this.update = function(time, sketch) {
-      // x position follows a circle
-      let w = 0.6; // angular speed
-      let angle = w * time + this.initialangle;
-      this.posX = sketch.width / 2 + this.radius * sketch.sin(angle);
-  
-      // different size snowflakes fall at slightly different y speeds
-      this.posY += sketch.pow(this.size, 0.5);
-  
+      if(gestureMode == "start"){
+        // x position follows a circle
+        let w = 0.6; // angular speed
+        let angle = w * time + this.initialangle;
+        this.posX = sketch.width / 2 + this.radius * sketch.sin(angle);
+    
+        // different size snowflakes fall at slightly different y speeds
+        this.posY += sketch.pow(this.size, 0.5);
+    
+      }
       // delete snowflake if past end of screen
       if (this.posY > sketch.height) {
         let index = snowflakes.indexOf(this);
@@ -188,7 +196,9 @@ function snowflake(sketch) {
     };
   
     this.display = function() {
-        sketch.ellipse(this.posX, this.posY, this.size);
+        let currColor = colorScale(sketch.map(gestureCounter/10, 0, 1, 1, 0)).rgb();
+        sketch.fill(currColor[0], currColor[1], currColor[2]);
+        sketch.ellipse(this.posX, this.posY, this.size+sketch.map(gestureCounter, 0, 10, 1, 70));
     };
   }
 
@@ -199,19 +209,20 @@ sketch.setup = () => {
     //canvas setup
     let canvas = sketch.createCanvas(...settings.canvasSize);
     canvas.parent('sketch-container');
-    sketch.fill(240);
     sketch.noStroke();
+    sketch.frameRate(24)
     //run wecam
     runDemo();
   }
   // run each frame
   sketch.draw = () => {
     updateParams();
-    sketch.background('brown');
+    let currColor = colorScale(gestureCounter/10).rgb();
+    sketch.background(currColor[0], currColor[1], currColor[2]);
     let t = sketch.frameCount / 60; // update time
   
     // create a random number of snowflakes each frame
-    for (let i = 0; i < sketch.random(5); i++) {
+    for (let i = 0; i < 1; i++) {
       snowflakes.push(new snowflake(sketch)); // append snowflake object
     }
   
