@@ -178,16 +178,16 @@ function snowflake(sketch) {
     this.radius = sketch.sqrt(sketch.random(sketch.pow(sketch.width / 2, 2)));
   
     this.update = function(time, sketch) {
+      // x position follows a circle
+      let w = 0.6; // angular speed
+      let angle = w * time + this.initialangle;
+      this.posX = sketch.width / 2 + this.radius * sketch.sin(angle);
+
       if(gestureMode == "start"){
-        // x position follows a circle
-        let w = 0.6; // angular speed
-        let angle = w * time + this.initialangle;
-        this.posX = sketch.width / 2 + this.radius * sketch.sin(angle);
-    
         // different size snowflakes fall at slightly different y speeds
-        this.posY += sketch.pow(this.size, 0.5);
-    
+        this.posY += sketch.pow(this.size, 0.5);    
       }
+
       // delete snowflake if past end of screen
       if (this.posY > sketch.height) {
         let index = snowflakes.indexOf(this);
